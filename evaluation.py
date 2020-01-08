@@ -121,10 +121,10 @@ for patient_name in PATIENTS:
         csp_methods={
             # generalized eigenvalue problem approach without any checks
             'gep_no_checks': partial(csp_wrapper, csp_method=csp_gep_no_checks),
-            # geometric approach
+            # geometric approach (with dimensionality reduction)
             'gap': partial(csp_wrapper, csp_method=partial(csp_geometric_approach)),
             # complex solution for first eigendecomposition (np.linalg.eig and scipy.linalg.eig behave the same)
-            'rgap_eig': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=True)),
+            'gap_eig_r': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=True)),
             'gap_eig': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=False)),
             # Packages
             'fieldtrip': partial(matlab_wrapper, csp_method='use_fieldtrip'),
