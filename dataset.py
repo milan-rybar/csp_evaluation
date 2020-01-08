@@ -16,9 +16,10 @@ class Dataset(object):
     Represents data from single participant from BCI Competition III IVa.
     """
 
-    def __init__(self, data_set_path, true_labels_path):
+    def __init__(self, data_set_path, true_labels_path, patient_name):
         self.data_set = read_mat(data_set_path)
         self.true_labels = read_mat(true_labels_path)
+        self.patient_name = patient_name
 
         # data as (channels, time)
         self.data = 0.1 * np.array(self.data_set['cnt'], dtype=np.double)  # convert to uV values
@@ -93,4 +94,4 @@ def load_dataset(patient_name, dir_path=DATA_DIR):
     data_set_path = os.path.join(dir_path, 'data_set_IVa_{}.mat'.format(patient_name))
     true_labels_path = os.path.join(dir_path, 'true_labels_{}.mat'.format(patient_name))
 
-    return Dataset(data_set_path, true_labels_path)
+    return Dataset(data_set_path, true_labels_path, patient_name)

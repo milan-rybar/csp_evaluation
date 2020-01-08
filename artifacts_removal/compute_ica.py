@@ -15,7 +15,7 @@ from utils import make_dirs
 for patient_name in PATIENTS:
     dataset = load_dataset(patient_name)
 
-    filtered_data = dataset.filter_data(dataset.data, fmin=1.0, fmax=40)
+    filtered_data = dataset.filter_data(dataset.data, fmin=1.0, fmax=40.0)
 
     # all trials (trials, channels, time)
     labels_idx = dataset.competition_training_idx + dataset.competition_test_idx
