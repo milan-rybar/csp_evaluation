@@ -10,7 +10,7 @@ ANALYSIS_FREQUENCY_END = 14.0
 
 
 # path to data directory
-DATA_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data')
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
 # path to results directory
-RESULTS_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'results')
+RESULTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'results')

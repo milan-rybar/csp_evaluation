@@ -220,7 +220,7 @@ def csp_geometric_approach_no_checks(R_1, R_2, eig_method, dim_reduction=True):
     return W_T, D_1
 
 
-def csp_wrapper(X, y, csp_method):
+def csp_wrapper(X, y, csp_method, n_csp_components, dataset):
     """
     Wrapper for different CSP implementations.
     """
@@ -236,6 +236,23 @@ def csp_wrapper(X, y, csp_method):
     R_2 = compute_mean_normalized_spatial_covariance(data_2)
 
     W_T, eigenvalues = csp_method(R_1, R_2)
-    logging.debug('CSP SF %s', W_T.shape)
+    logging.debug('CSP unmixing matrix %s', W_T.shape)
 
-    return W_T, eigenvalues
+    # select N CSP components
+    unmixing_matrix = get_n_csp_components(W_T, n_csp_components // 2)
+
+    return unmixing_matrix, eigenvalues
+
+
+def get_n_csp_components(W_T, n_select):
+    assert len(W_T.shape) == 2  # (components, channels)
+
+    n_sel_sources = 2 * n_select
+    # select 2 * n components (n first and n last)
+    selection = tuple(list(range(0, n_select)) + list(np.array(range(1, n_select + 1)) * -1))
+    assert len(selection) == n_sel_sources
+    logging.debug('Select subset: %s', selection)
+
+    W_T_selected = W_T[selection, :]
+    assert W_T_selected.shape == (n_sel_sources, W_T_selected.shape[1])
+    return W_T_selected

@@ -15,14 +15,14 @@ output_path = os.path.join(RESULTS_DIR, 'plots')
 make_dirs(output_path)
 
 csp_methods = list(results.keys())
-n_csp_components = list(results[csp_methods[0]][0]['n_csp'].keys())
-classifiers = list(results[csp_methods[0]][0]['n_csp'][n_csp_components[0]].keys())
+n_csp_components = list(results[csp_methods[0]][0].keys())
+classifiers = list(results[csp_methods[0]][0][n_csp_components[0]]['classifier'].keys())
 
 for classifier_name in classifiers:
     data = []
     labels = []
     for n_csp in n_csp_components:
-        data += [[result['n_csp'][n_csp][classifier_name]['score_test'] for result in results[csp_method]] for csp_method in csp_methods]
+        data += [[result[n_csp]['classifier'][classifier_name]['score_test'] for result in results[csp_method]] for csp_method in csp_methods]
         labels += ['{} {}'.format(n_csp, csp_method) for csp_method in csp_methods]
 
     plt.figure()

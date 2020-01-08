@@ -1,4 +1,3 @@
-import logging
 import os
 from collections import defaultdict
 from functools import partial
@@ -13,12 +12,13 @@ from artifacts_removal.ica_removal import remove_artifacts
 from config import (ANALYSIS_FREQUENCY_START, ANALYSIS_FREQUENCY_END,
                     ANALYSIS_TIME_START, ANALYSIS_TIME_END, RESULTS_DIR)
 from dataset import load_dataset, PATIENTS
+from implementations.csp_matlab import matlab_wrapper
 from implementations.csp_python import (csp_wrapper, csp_gep_no_checks, csp_geometric_approach,
                                         csp_geometric_approach_no_checks)
 from utils import make_dirs
 
 
-def grid_evaluation(dataset, artifact_removal, csp_methods, n_csp_components, classifiers):
+def grid_evaluation(dataset, artifact_removal, csp_methods, n_csp_components_list, classifiers):
     """
     Evaluation for all options.
     """
@@ -40,58 +40,48 @@ def grid_evaluation(dataset, artifact_removal, csp_methods, n_csp_components, cl
         X_train, X_test = trials[train_index], trials[test_index]
         y_train, y_test = dataset.labels[train_index], dataset.labels[test_index]
 
-        # train different CSP implementations
+        # run CSP for each number of CSP components separately
+        # to have implementation agnostic results
         for csp_method_name, csp_method in csp_methods.items():
-            result = _classification(X_train, X_test, y_train, y_test, csp_method, n_csp_components, classifiers)
-            results[csp_method_name].append(result)
+            split_results = {}
+            for n_csp_components in n_csp_components_list:
+                r = _classification(X_train, X_test, y_train, y_test, csp_method, n_csp_components, classifiers, dataset)
+                split_results[n_csp_components] = r
 
+            results[csp_method_name].append(split_results)
+
+    # results as [csp method][cross-validation split][#csp components][classifier]
     return results
 
 
-def _classification(X_train, X_test, y_train, y_test, csp_method, n_csp_components, classifiers):
+def _classification(X_train, X_test, y_train, y_test, csp_method, n_csp_components, classifiers, dataset):
     # compute CSP to get spatial filters
-    W_T, eigenvalues = csp_method(X_train, y_train)
+    unmixing_matrix, eigenvalues = csp_method(
+        X=X_train, y=y_train, n_csp_components=n_csp_components, dataset=dataset)
 
     result = {
-        'W_T': W_T,
+        'W_T': unmixing_matrix,
         'eigenvalues': eigenvalues,
-        'n_csp': defaultdict(dict)
+        'classifier': {}
     }
 
-    for n_csp in n_csp_components:
-        unmixing_matrix = get_n_csp_components(W_T, n_csp)
+    # project to component space and transform to log-variance
+    X_train_transformed = transform_csp_components_for_classification(np.matmul(unmixing_matrix, X_train))
+    X_test_transformed = transform_csp_components_for_classification(np.matmul(unmixing_matrix, X_test))
 
-        # project to component space and transform to log-variance
-        X_train_transformed = transform_csp_components_for_classification(np.matmul(unmixing_matrix, X_train))
-        X_test_transformed = transform_csp_components_for_classification(np.matmul(unmixing_matrix, X_test))
+    # train different classifiers
+    for classifier_name, classifier in classifiers.items():
+        classifier.fit(X_train_transformed, y_train)
 
-        # train different classifiers
-        for classifier_name, classifier in classifiers.items():
-            classifier.fit(X_train_transformed, y_train)
+        score_train = classifier.score(X_train_transformed, y_train)
+        score_test = classifier.score(X_test_transformed, y_test)
 
-            score_train = classifier.score(X_train_transformed, y_train)
-            score_test = classifier.score(X_test_transformed, y_test)
-
-            result['n_csp'][n_csp][classifier_name] = {
-                'score_train': score_train,
-                'score_test': score_test
-            }
+        result['classifier'][classifier_name] = {
+            'score_train': score_train,
+            'score_test': score_test
+        }
 
     return result
-
-
-def get_n_csp_components(W_T, n_select):
-    assert len(W_T.shape) == 2  # (components, channels)
-
-    n_sel_sources = 2 * n_select
-    # select 2 * n components (n first and n last)
-    selection = tuple(list(range(0, n_select)) + list(np.array(range(1, n_select + 1)) * -1))
-    assert len(selection) == n_sel_sources
-    logging.debug('Select subset: %s', selection)
-
-    W_T_selected = W_T[selection, :]
-    assert W_T_selected.shape == (n_sel_sources, W_T_selected.shape[1])
-    return W_T_selected
 
 
 def transform_csp_components_for_classification(data):
@@ -120,14 +110,15 @@ for patient_name in PATIENTS:
         artifact_removal=remove_artifacts,
         csp_methods={
             # generalized eigenvalue problem approach without any checks
-            'gep_no_checks': partial(csp_wrapper, csp_method=csp_gep_no_checks),
+            # 'gep_no_checks': partial(csp_wrapper, csp_method=csp_gep_no_checks),
             # geometric approach
-            'gap': partial(csp_wrapper, csp_method=partial(csp_geometric_approach)),
-            # complex solution for first eigendecomposition (np.linalg.eig and scipy.linalg.eig behave the same)
-            'rgap_eig': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=True)),
-            'gap_eig': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=False)),
+            # 'gap': partial(csp_wrapper, csp_method=partial(csp_geometric_approach)),
+            # # complex solution for first eigendecomposition (np.linalg.eig and scipy.linalg.eig behave the same)
+            # 'rgap_eig': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=True)),
+            # 'gap_eig': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=False)),
+            'fieldtrip': partial(matlab_wrapper, csp_method='use_fieldtrip'),
         },
-        n_csp_components=[1, 2, 3, 4, 5],
+        n_csp_components_list=[2, 4, 6, 8, 10],
         classifiers={
             'lda': LinearDiscriminantAnalysis(),
             'svm': SVC(kernel='rbf', gamma='auto', C=1.0)  # as default values
