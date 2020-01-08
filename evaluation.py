@@ -3,7 +3,7 @@ from collections import defaultdict
 from functools import partial
 
 import numpy as np
-from joblib import dump
+from joblib import Parallel, delayed, dump
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import StratifiedKFold
 from sklearn.svm import SVC
@@ -15,7 +15,7 @@ from dataset import load_dataset, PATIENTS
 from implementations.csp_matlab import matlab_wrapper
 from implementations.csp_python import (csp_wrapper, csp_gep_no_checks, csp_geometric_approach,
                                         csp_geometric_approach_no_checks)
-from utils import make_dirs
+from utils import make_dirs, n_jobs
 
 
 def grid_evaluation(dataset, artifact_removal, csp_methods, n_csp_components_list, classifiers):
@@ -32,7 +32,7 @@ def grid_evaluation(dataset, artifact_removal, csp_methods, n_csp_components_lis
     labels_idx = dataset.competition_training_idx + dataset.competition_test_idx
     trials = dataset.get_trials(data=data, labels_idx=labels_idx, tmin=ANALYSIS_TIME_START, tmax=ANALYSIS_TIME_END)
 
-    results = defaultdict(list)
+    results = []
 
     # cross-validation (use always the same splits)
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
@@ -42,19 +42,25 @@ def grid_evaluation(dataset, artifact_removal, csp_methods, n_csp_components_lis
 
         # run CSP for each number of CSP components separately
         # to have implementation agnostic results
-        for csp_method_name, csp_method in csp_methods.items():
-            split_results = {}
-            for n_csp_components in n_csp_components_list:
-                r = _classification(X_train, X_test, y_train, y_test, csp_method, n_csp_components, classifiers, dataset)
-                split_results[n_csp_components] = r
+        # NOTE: run in parallel mainly for Matlab wrapper to speed up opening/closing Matlab for each call
+        split_results = Parallel(n_jobs=n_jobs())(
+            delayed(_classification)(X_train, X_test, y_train, y_test, csp_method, csp_method_name,
+                                     n_csp_components, classifiers, dataset)
+            for csp_method_name, csp_method in csp_methods.items()
+            for n_csp_components in n_csp_components_list
+        )
 
-            results[csp_method_name].append(split_results)
+        # [csp method][#csp components][classifier]
+        split_results_transformed = defaultdict(dict)
+        for r in split_results:
+            split_results_transformed[r['csp_method']][r['n_csp_components']] = r['result']
+        results.append(split_results_transformed)
 
-    # results as [csp method][cross-validation split][#csp components][classifier]
+    # results as [cross-validation split][csp method][#csp components][classifier]
     return results
 
 
-def _classification(X_train, X_test, y_train, y_test, csp_method, n_csp_components, classifiers, dataset):
+def _classification(X_train, X_test, y_train, y_test, csp_method, csp_method_name, n_csp_components, classifiers, dataset):
     # compute CSP to get spatial filters
     unmixing_matrix, eigenvalues = csp_method(
         X=X_train, y=y_train, n_csp_components=n_csp_components, dataset=dataset)
@@ -81,7 +87,11 @@ def _classification(X_train, X_test, y_train, y_test, csp_method, n_csp_componen
             'score_test': score_test
         }
 
-    return result
+    return {
+        'csp_method': csp_method_name,
+        'n_csp_components': n_csp_components,
+        'result': result
+    }
 
 
 def transform_csp_components_for_classification(data):
@@ -110,13 +120,15 @@ for patient_name in PATIENTS:
         artifact_removal=remove_artifacts,
         csp_methods={
             # generalized eigenvalue problem approach without any checks
-            # 'gep_no_checks': partial(csp_wrapper, csp_method=csp_gep_no_checks),
+            'gep_no_checks': partial(csp_wrapper, csp_method=csp_gep_no_checks),
             # geometric approach
-            # 'gap': partial(csp_wrapper, csp_method=partial(csp_geometric_approach)),
-            # # complex solution for first eigendecomposition (np.linalg.eig and scipy.linalg.eig behave the same)
-            # 'rgap_eig': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=True)),
-            # 'gap_eig': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=False)),
+            'gap': partial(csp_wrapper, csp_method=partial(csp_geometric_approach)),
+            # complex solution for first eigendecomposition (np.linalg.eig and scipy.linalg.eig behave the same)
+            'rgap_eig': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=True)),
+            'gap_eig': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=False)),
+            # Packages
             'fieldtrip': partial(matlab_wrapper, csp_method='use_fieldtrip'),
+            'bbci': partial(matlab_wrapper, csp_method='use_bbci')
         },
         n_csp_components_list=[2, 4, 6, 8, 10],
         classifiers={

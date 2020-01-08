@@ -4,6 +4,7 @@ import os
 
 import mne
 import numpy as np
+from joblib import cpu_count
 from matplotlib import pyplot as plt
 
 
@@ -74,3 +75,10 @@ def make_dirs(path):
             logging.debug('created %s', path)
         except:
             logging.warning('Attempt to create dir "%s" that already exists.', path)
+
+
+def n_jobs():
+    """
+    Return number of CPU for jobs processing.
+    """
+    return cpu_count() - 1  # one for master
