@@ -27,9 +27,9 @@ for classifier_name in classifiers:
 
     plt.figure(figsize=(8, 6))
     plt.boxplot(data, showmeans=True, labels=labels)
-    plt.ylabel('Accuracy')
+    plt.ylabel('Test Accuracy')
     plt.xticks(rotation=90)
-    plt.title('{}'.format(classifier_name))
+    plt.title('{}, Stratified 5-fold cross-validation'.format(classifier_name))
     plt.tight_layout()
     # plt.show()
     plt.savefig(os.path.join(output_path, '{}.png'.format(classifier_name)))
