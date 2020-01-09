@@ -87,9 +87,13 @@ def _classification(X_train, X_test, y_train, y_test, csp_method, csp_method_nam
         score_train = classifier.score(X_train_transformed, y_train)
         score_test = classifier.score(X_test_transformed, y_test)
 
+        # correct prediction on the test fold
+        correct_test = classifier.predict(X_test_transformed) == y_test
+
         result['classifier'][classifier_name] = {
             'score_train': score_train,
-            'score_test': score_test
+            'score_test': score_test,
+            'correct_test': correct_test
         }
 
     return {
@@ -120,7 +124,7 @@ def transform_csp_components_for_classification(data):
 
 
 for patient_name in PATIENTS:
-    n_csp_components_list = [2, 4, 6, 8, 10]
+    n_csp_components_list = list(range(2, 22, 2))
 
     classifiers = {
         'lda': LinearDiscriminantAnalysis(),
