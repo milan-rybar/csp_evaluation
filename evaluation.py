@@ -12,9 +12,8 @@ from artifacts_removal.ica_removal import remove_artifacts
 from config import (ANALYSIS_FREQUENCY_START, ANALYSIS_FREQUENCY_END,
                     ANALYSIS_TIME_START, ANALYSIS_TIME_END, RESULTS_DIR)
 from dataset import load_dataset, PATIENTS
-from implementations.csp_matlab import matlab_wrapper
 from implementations.csp_python import (csp_wrapper, csp_gep_no_checks, csp_geometric_approach,
-                                        csp_geometric_approach_no_checks)
+                                        csp_geometric_approach_no_checks, csp_gep)
 from implementations.pca_dim_reduction import dim_reduction_pca
 from utils import make_dirs, n_jobs
 
@@ -121,32 +120,64 @@ def transform_csp_components_for_classification(data):
 
 
 for patient_name in PATIENTS:
+    n_csp_components_list = [2, 4, 6, 8, 10]
+
+    classifiers = {
+        'lda': LinearDiscriminantAnalysis(),
+        'svm': SVC(kernel='rbf', gamma='auto', C=1.0)  # as default values
+    }
+
     results = grid_evaluation(
         dataset=load_dataset(patient_name),
         artifact_removal=remove_artifacts,
+        pca_reduction=False,  # no dimensionality reduction by PCA before CSP
         csp_methods={
             # generalized eigenvalue problem approach without any checks
+            # that may have complex solution
             'gep_no_checks': partial(csp_wrapper, csp_method=csp_gep_no_checks),
-            # geometric approach (with dimensionality reduction)
-            'gap': partial(csp_wrapper, csp_method=partial(csp_geometric_approach)),
-            # complex solution for first eigendecomposition (np.linalg.eig and scipy.linalg.eig behave the same)
-            'gap_eig_r': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=True)),
+
+            # geometric approach (with dimensionality reduction during whitening step)
+            'gap_dr': partial(csp_wrapper, csp_method=partial(csp_geometric_approach)),
+
+            # geometric approach that may have complex solution for first eigendecomposition
+            # (note that `np.linalg.eig` and `scipy.linalg.eig` have the same behaviour)
+            # i) with dimensionality reduction during whitening step
+            'gap_eig_dr': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=True)),
+            # ii) without dimensionality reduction during whitening step
             'gap_eig': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=False)),
-            # Packages
-            # 'fieldtrip': partial(matlab_wrapper, csp_method='use_fieldtrip'),
-            # 'bbci': partial(matlab_wrapper, csp_method='use_bbci'),
-            # 'mne': use_mne,  # not for full-rank covariance matrices
         },
-        n_csp_components_list=[2, 4, 6, 8, 10],
-        classifiers={
-            'lda': LinearDiscriminantAnalysis(),
-            'svm': SVC(kernel='rbf', gamma='auto', C=1.0)  # as default values
-        },
-        pca_reduction=True
+        n_csp_components_list=n_csp_components_list,
+        classifiers=classifiers
     )
+
+    pca_results = grid_evaluation(
+        dataset=load_dataset(patient_name),
+        artifact_removal=remove_artifacts,
+        pca_reduction=True,  # dimensionality reduction by PCA before CSP
+        csp_methods={
+            # generalized eigenvalue problem approach for full rank matrices
+            'pca_gep': partial(csp_wrapper, csp_method=csp_gep),
+            # generalized eigenvalue problem approach without any checks
+            'pca_gep_no_checks': partial(csp_wrapper, csp_method=csp_gep_no_checks),
+
+            # geometric approach (with dimensionality reduction during whitening step)
+            'pca_gap_dr': partial(csp_wrapper, csp_method=partial(csp_geometric_approach)),
+
+            # geometric approach
+            # (note that `np.linalg.eig` and `scipy.linalg.eig` have the same behaviour)
+            # i) with dimensionality reduction during whitening step
+            'pca_gap_eig_dr': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=True)),
+            # ii) without dimensionality reduction during whitening step
+            'pca_gap_eig': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=False)),
+        },
+        n_csp_components_list=n_csp_components_list,
+        classifiers=classifiers
+    )
+
+    joined_results = [{**a, **b} for a, b in zip(results, pca_results)]
 
     output_path = os.path.join(RESULTS_DIR, 'evaluation')
     make_dirs(output_path)
-    dump(results, os.path.join(output_path, '{}.joblib'.format(patient_name)))
+    dump(joined_results, os.path.join(output_path, '{}.joblib'.format(patient_name)))
 
     break
