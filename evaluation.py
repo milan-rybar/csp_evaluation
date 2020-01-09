@@ -15,6 +15,7 @@ from dataset import load_dataset, PATIENTS
 from implementations.csp_matlab import matlab_wrapper
 from implementations.csp_python import (csp_wrapper, csp_gep_no_checks, csp_geometric_approach,
                                         csp_geometric_approach_no_checks)
+from implementations.use_mne import use_mne
 from utils import make_dirs, n_jobs
 
 
@@ -64,6 +65,7 @@ def _classification(X_train, X_test, y_train, y_test, csp_method, csp_method_nam
     # compute CSP to get spatial filters
     unmixing_matrix, eigenvalues = csp_method(
         X=X_train, y=y_train, n_csp_components=n_csp_components, dataset=dataset)
+    assert unmixing_matrix.shape == (n_csp_components, dataset.n_channels)
 
     result = {
         'W_T': unmixing_matrix,
@@ -128,7 +130,8 @@ for patient_name in PATIENTS:
             'gap_eig': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=False)),
             # Packages
             'fieldtrip': partial(matlab_wrapper, csp_method='use_fieldtrip'),
-            'bbci': partial(matlab_wrapper, csp_method='use_bbci')
+            'bbci': partial(matlab_wrapper, csp_method='use_bbci'),
+            # 'mne': use_mne,  # not for full-rank covariance matrices
         },
         n_csp_components_list=[2, 4, 6, 8, 10],
         classifiers={
