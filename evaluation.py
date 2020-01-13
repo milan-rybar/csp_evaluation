@@ -8,7 +8,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import StratifiedKFold
 from sklearn.svm import SVC
 
-from artifacts_removal.ica_removal import remove_artifacts
+from artifacts_removal.ica_removal import remove_artifacts_manual
 from config import (ANALYSIS_FREQUENCY_START, ANALYSIS_FREQUENCY_END,
                     ANALYSIS_TIME_START, ANALYSIS_TIME_END, RESULTS_DIR)
 from dataset import load_dataset, PATIENTS
@@ -133,7 +133,7 @@ for patient_name in PATIENTS:
 
     results = grid_evaluation(
         dataset=load_dataset(patient_name),
-        artifact_removal=remove_artifacts,
+        artifact_removal=remove_artifacts_manual,
         pca_reduction=False,  # no dimensionality reduction by PCA before CSP
         csp_methods={
             # generalized eigenvalue problem approach without any checks
@@ -156,7 +156,7 @@ for patient_name in PATIENTS:
 
     pca_results = grid_evaluation(
         dataset=load_dataset(patient_name),
-        artifact_removal=remove_artifacts,
+        artifact_removal=remove_artifacts_manual,
         pca_reduction=True,  # dimensionality reduction by PCA before CSP
         csp_methods={
             # generalized eigenvalue problem approach for full rank matrices

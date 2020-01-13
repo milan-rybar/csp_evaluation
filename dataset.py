@@ -83,7 +83,7 @@ class Dataset(object):
 
         # NOTE: MNE Epochs has `tmax` inclusive => change to exclusive
         return mne.Epochs(raw=raw, events=events, tmin=tmin, tmax=tmax - 1.0 / self.fs,
-                          baseline=None, detrend=None, proj=False)
+                          baseline=None, detrend=None, proj=False, preload=True)
 
     def get_mne_layout(self):
         pos = np.array(list(zip(self.data_set['nfo']['xpos'], self.data_set['nfo']['ypos'])))
