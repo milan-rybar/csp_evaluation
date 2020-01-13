@@ -31,7 +31,7 @@ def remove_artifacts_manual(dataset):
     ica.exclude = ICA_ARTIFACTS[dataset.patient_name]
     ica.apply(raw)
 
-    return raw.get_data()
+    return raw.get_data(), ica.exclude
 
 
 def remove_artifacts(dataset, method):
@@ -52,7 +52,7 @@ def remove_artifacts(dataset, method):
     logging.info('Removing: {}'.format(ica.exclude))
     ica.apply(raw)
 
-    return raw.get_data()
+    return raw.get_data(), ica.exclude
 
 
 def ic_artifacts_by_peak_values(ica, trials_epochs):

@@ -25,7 +25,7 @@ def grid_evaluation(dataset, artifact_removal, csp_method, n_csp_components_list
     Evaluation for all options.
     """
     # remove artifacts
-    data = artifact_removal(dataset)
+    data, ic_artifacts = artifact_removal(dataset)
 
     # filter data
     data = dataset.filter_data(data, fmin=ANALYSIS_FREQUENCY_START, fmax=ANALYSIS_FREQUENCY_END)
@@ -53,8 +53,11 @@ def grid_evaluation(dataset, artifact_removal, csp_method, n_csp_components_list
         }
         results.append(split_results)
 
-    # results as [cross-validation split][#csp components][classifier]
-    return results
+    return {
+        'ic_artifacts': ic_artifacts,
+        # results as [cross-validation split][#csp components][classifier]
+        'results': results
+    }
 
 
 def _classification(X_train, X_test, y_train, y_test, csp_method, n_csp_components, classifiers, dataset):
