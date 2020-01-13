@@ -63,5 +63,7 @@ dependencies:
   - xz=5.2.4=h14c3975_4
   - zlib=1.2.11=h7b6447c_3
   - pip:
+    - jug==1.6.9
     - mne==0.17.2
+    - redis==3.3.11
 
