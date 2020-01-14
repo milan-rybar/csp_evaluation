@@ -41,7 +41,7 @@ def grid_evaluation(dataset, artifact_removal, csp_method, n_csp_components_list
     results = []
 
     # cross-validation (use always the same splits)
-    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
     for train_index, test_index in cv.split(trials, dataset.labels):
         X_train, X_test = trials[train_index], trials[test_index]
         y_train, y_test = dataset.labels[train_index], dataset.labels[test_index]
