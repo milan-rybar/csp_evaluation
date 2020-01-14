@@ -4,8 +4,7 @@ import subprocess
 import tempfile
 
 import numpy as np
-from mne.externals.pymatreader import read_mat
-from scipy.io import savemat
+from scipy.io import savemat, loadmat
 
 from implementations.csp_python import compute_mean_normalized_spatial_covariance, get_n_csp_components
 
@@ -39,9 +38,10 @@ def matlab_package_wrapper(X, y, csp_method, n_csp_components, dataset):
         subprocess.run(command)
 
         # get the result
-        result = read_mat(output_path)
+        result = loadmat(output_path)
 
-        unmixing_matrix = np.array(result['unmixing_matrix'], dtype=np.double)
+        unmixing_matrix = result['unmixing_matrix']
+        assert unmixing_matrix.dtype in [np.double, np.complex], unmixing_matrix.dtype
         logging.debug('CSP unmixing matrix %s', unmixing_matrix.shape)
         assert unmixing_matrix.shape[0] == n_csp_components, unmixing_matrix.shape
 
@@ -101,9 +101,10 @@ def matlab_wrapper(X, y, csp_method, n_csp_components, dataset):
         subprocess.run(command)
 
         # get the result
-        result = read_mat(output_path)
+        result = loadmat(output_path)
 
-        W_T = np.array(result['unmixing_matrix'], dtype=np.double)
+        W_T = result['unmixing_matrix']
+        assert W_T.dtype in [np.double, np.complex], W_T.dtype
         logging.debug('CSP unmixing matrix %s', W_T.shape)
         assert W_T.shape == (X.shape[1], X.shape[1])
 

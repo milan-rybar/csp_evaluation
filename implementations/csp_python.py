@@ -16,7 +16,7 @@ def compute_mean_normalized_spatial_covariance(data):
     n_trials, n_channels, _ = data.shape
 
     # normalized spatial covariances
-    R = np.zeros((n_channels, n_channels), dtype=np.double)
+    R = np.zeros((n_channels, n_channels), dtype=data.dtype)
     for trial_idx in range(n_trials):
         # covariance of the trial
         cov = np.matmul(data[trial_idx, :, :], data[trial_idx, :, :].T)
