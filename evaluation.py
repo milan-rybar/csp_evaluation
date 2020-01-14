@@ -130,7 +130,7 @@ classifiers = {
 
 csp_methods = {
     # generalized eigenvalue problem approach for full rank matrices
-    'pca_gep': partial(csp_wrapper, csp_method=csp_gep),
+    'gep': partial(csp_wrapper, csp_method=csp_gep),
     # generalized eigenvalue problem approach without any checks
     # that may have complex solution
     'gep_no_checks': partial(csp_wrapper, csp_method=csp_gep_no_checks),

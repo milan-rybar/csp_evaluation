@@ -105,7 +105,7 @@ def matlab_wrapper(X, y, csp_method, n_csp_components, dataset):
 
         W_T = np.array(result['unmixing_matrix'], dtype=np.double)
         logging.debug('CSP unmixing matrix %s', W_T.shape)
-        assert W_T.shape == (dataset.n_channels, dataset.n_channels)
+        assert W_T.shape == (X.shape[1], X.shape[1])
 
         eigenvalues = result['eigenvalues']
 
