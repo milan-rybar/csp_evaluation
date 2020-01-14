@@ -15,11 +15,21 @@ eeg_data = double(cnt') * 0.1; % convert to uV values
 n_channels = size(eeg_data, 1);
 n_samples = size(eeg_data, 2);
 
+% add artificial data channel with events information
+label_channel = zeros(n_samples, 1);
+label_channel(mrk.pos) = 1;  % no need to distinguish between events
+eeg_data(n_channels + 1, :) = label_channel;  % add extra channel
+
 % load dataset in EEGLAB
 [ALLEEG EEG CURRENTSET ALLCOM] = eeglab;
 EEG = pop_importdata('dataformat','array','nbchan',0,'data','eeg_data','setname','dataset','srate',nfo.fs,'pnts',0,'xmin',0);
 [ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, 0,'gui','off'); 
 [ALLEEG EEG CURRENTSET] = eeg_store(ALLEEG, EEG, CURRENTSET);
+
+% import events from data channel
+EEG = eeg_checkset( EEG );
+EEG = pop_chanevent(EEG, n_channels + 1,'edge','leading','edgelen',0);
+[ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
 
 % filter data
 EEG = pop_eegfiltnew(EEG, 'locutoff',1,'hicutoff',40);
@@ -30,7 +40,13 @@ EEG = eeg_checkset( EEG );
 EEG = pop_chanedit(EEG, 'load',{'/home/milan/csp_evaluation/data/locations.xyz' 'filetype' 'autodetect'});
 [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
 
-% train ICA
+% extract epochs
+EEG = eeg_checkset( EEG );
+EEG = pop_epoch( EEG, {  }, [0         4.5], 'newname', 'dataset epochs', 'epochinfo', 'yes');
+[ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, 2,'gui','off'); 
+assert(all(size(EEG.data) == [n_channels, 450, length(label_channel(mrk.pos))]));
+
+% train ICA (on epochs)
 EEG = eeg_checkset( EEG );
 EEG = pop_runica(EEG, 'icatype', 'runica', 'extended',1,'interrupt','on');
 [ALLEEG EEG] = eeg_store(ALLEEG, EEG, CURRENTSET);
@@ -51,7 +67,25 @@ end
 
 ic_classes_name = EEG.etc.ic_classification.ICLabel.classes(ic_classes);
 
-% remove components
+% extract ICA model
+icawinv = EEG.icawinv;
+icaweights = EEG.icaweights;
+icasphere = EEG.icasphere;
+icachansind = EEG.icachansind;
+icaact = EEG.icaact;
+
+% change to dataset before epochs extraction
+[ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, 3,'retrieve',2,'study',0); 
+assert(all(size(EEG.data) == size(cnt')));
+
+% set manually ICA model
+EEG.icawinv = icawinv;
+EEG.icaweights = icaweights;
+EEG.icasphere = icasphere;
+EEG.icachansind = icachansind;
+EEG.icaact = icaact;
+
+% remove components from all data (not only epochs)
 EEG = eeg_checkset( EEG );
 EEG = pop_subcomp( EEG, ic_artifacts, 0);
 [ALLEEG EEG CURRENTSET] = pop_newset(ALLEEG, EEG, 3,'gui','off'); 
