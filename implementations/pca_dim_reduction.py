@@ -5,7 +5,7 @@ from implementations.csp_python import compute_mean_normalized_spatial_covarianc
 
 
 def dim_reduction_pca(trials):
-    rank = np.linalg.matrix_rank(trials[0])  # matrix rank of the first trial
+    rank = np.linalg.matrix_rank(compute_mean_normalized_spatial_covariance(trials[:1]))  # matrix rank of the first trial
     assert rank == np.linalg.matrix_rank(compute_mean_normalized_spatial_covariance(trials))
 
     # reduce dimensions by PCA

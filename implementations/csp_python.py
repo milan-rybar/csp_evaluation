@@ -127,7 +127,7 @@ def csp_geometric_approach(R_1, R_2):
 
     # covariance matrix can be singular (e.g., due to ICA-based artifacts removal) =>
     # exclude axis (eigenvectors) with zero-eigenvalues => dimensionality reduction at this point
-    valid_axis = np.nonzero(F >= 1e-15)[0]
+    valid_axis = np.nonzero(F >= 1e-14)[0]
     assert len(valid_axis) == np.linalg.matrix_rank(R_c), (len(valid_axis), np.linalg.matrix_rank(R_c))
     n_sources = len(valid_axis)
     logging.info('Composite covariance matrix has %d zero-eigenvalues', n_channels - n_sources)
@@ -192,7 +192,7 @@ def csp_geometric_approach_no_checks(R_1, R_2, eig_method, dim_reduction=True):
     if dim_reduction:
         # covariance matrix can be singular (e.g., due to ICA-based artifacts removal) =>
         # exclude axis (eigenvectors) with zero-eigenvalues => dimensionality reduction at this point
-        valid_axis = np.nonzero(F >= 1e-15)[0]
+        valid_axis = np.nonzero(F >= 1e-14)[0]
         assert len(valid_axis) == np.linalg.matrix_rank(R_c), (len(valid_axis), np.linalg.matrix_rank(R_c))
 
         F = F[valid_axis]

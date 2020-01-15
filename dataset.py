@@ -90,8 +90,8 @@ class Dataset(object):
         return mne.channels.generate_2d_layout(pos, ch_names=self.channel_names)
 
 
-def load_dataset(patient_name, dir_path=DATA_DIR):
-    data_set_path = os.path.join(dir_path, 'data_set_IVa_{}.mat'.format(patient_name))
-    true_labels_path = os.path.join(dir_path, 'true_labels_{}.mat'.format(patient_name))
+def load_dataset(patient_name, data_path=DATA_DIR, label_path=DATA_DIR):
+    data_set_path = os.path.join(data_path, 'data_set_IVa_{}.mat'.format(patient_name))
+    true_labels_path = os.path.join(label_path, 'true_labels_{}.mat'.format(patient_name))
 
     return Dataset(data_set_path, true_labels_path, patient_name)

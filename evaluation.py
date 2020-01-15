@@ -25,7 +25,10 @@ def grid_evaluation(dataset, artifact_removal, csp_method, n_csp_components_list
     Evaluation for all options.
     """
     # remove artifacts
-    data, ic_artifacts = artifact_removal(dataset)
+    if artifact_removal is not None:
+        data, ic_artifacts = artifact_removal(dataset)
+    else:
+        data, ic_artifacts = dataset.data, None
 
     # filter data
     data = dataset.filter_data(data, fmin=ANALYSIS_FREQUENCY_START, fmax=ANALYSIS_FREQUENCY_END)
@@ -119,6 +122,7 @@ artifact_removal_methods = {
     'manual':  remove_artifacts_manual,
     'peak': partial(remove_artifacts, method=ic_artifacts_by_peak_values),
     # 'kurtosis': partial(remove_artifacts, method=ic_artifacts_by_kurtosis)
+    'iclabel': None
 }
 
 n_csp_components_list = list(range(2, 22, 2))
@@ -160,9 +164,16 @@ def run_task(patient_name, artifact_removal_name, csp_method_name, pca_reduction
     output_path = os.path.join(RESULTS_DIR, 'evaluation', patient_name)
     make_dirs(output_path)
 
+    if artifact_removal_name == 'iclabel':
+        # cleaned dataset by ICLabel from EEGLAB
+        dataset = load_dataset(patient_name, data_path=os.path.join(RESULTS_DIR, 'iclabel'))
+    else:
+        # raw dataset
+        dataset = load_dataset(patient_name)
+
     try:
         result = grid_evaluation(
-            dataset=load_dataset(patient_name),
+            dataset=dataset,
             artifact_removal=artifact_removal_methods[artifact_removal_name],
             csp_method=csp_methods[csp_method_name],
             n_csp_components_list=n_csp_components_list,
