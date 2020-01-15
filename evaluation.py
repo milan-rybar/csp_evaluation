@@ -17,6 +17,7 @@ from implementations.csp_matlab import matlab_package_wrapper, matlab_wrapper
 from implementations.csp_python import (csp_wrapper, csp_gep_no_checks, csp_geometric_approach,
                                         csp_geometric_approach_no_checks, csp_gep)
 from implementations.pca_dim_reduction import dim_reduction_pca
+from implementations.use_mne import use_mne
 from utils import make_dirs
 
 
@@ -122,7 +123,7 @@ artifact_removal_methods = {
     'manual':  remove_artifacts_manual,
     'peak': partial(remove_artifacts, method=ic_artifacts_by_peak_values),
     # 'kurtosis': partial(remove_artifacts, method=ic_artifacts_by_kurtosis)
-    'iclabel': None
+    # 'iclabel': None
 }
 
 n_csp_components_list = list(range(2, 22, 2))
@@ -149,7 +150,10 @@ csp_methods = {
     # ii) without dimensionality reduction during whitening step
     'gap_eig': partial(csp_wrapper, csp_method=partial(csp_geometric_approach_no_checks, eig_method=np.linalg.eig, dim_reduction=False)),
 
-    # Packages
+    # Python Packages
+    'mne': use_mne,
+
+    # Matlab Packages
     'fieldtrip': partial(matlab_package_wrapper, csp_method='use_fieldtrip'),
     'bbci': partial(matlab_package_wrapper, csp_method='use_bbci'),
 
