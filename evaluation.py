@@ -118,7 +118,7 @@ def transform_csp_components_for_classification(data):
 artifact_removal_methods = {
     'manual':  remove_artifacts_manual,
     'peak': partial(remove_artifacts, method=ic_artifacts_by_peak_values),
-    'kurtosis': partial(remove_artifacts, method=ic_artifacts_by_kurtosis)
+    # 'kurtosis': partial(remove_artifacts, method=ic_artifacts_by_kurtosis)
 }
 
 n_csp_components_list = list(range(2, 22, 2))
@@ -170,10 +170,10 @@ def run_task(patient_name, artifact_removal_name, csp_method_name, pca_reduction
             pca_reduction=pca_reduction
         )
 
-        dump(result, os.path.join(output_path, '{}{}_{}.joblib'.format(prefix, artifact_removal_name, csp_method_name)))
+        dump(result, os.path.join(output_path, '{}_{}{}.joblib'.format(artifact_removal_name, prefix, csp_method_name)))
     except Exception as e:
         # do not save any results on bad CSP implementation
-        dump(e, os.path.join(output_path, '{}{}_{}.exception'.format(prefix, artifact_removal_name, csp_method_name)))
+        dump(e, os.path.join(output_path, '{}_{}{}.exception'.format(artifact_removal_name, prefix, csp_method_name)))
         print(e)
 
 
