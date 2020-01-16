@@ -171,65 +171,6 @@ for patient_name in PATIENTS:
             print(patient_name, artifact_removal_name)
 
 
-
-#%%
-# plot aggregate results
-for artifact_removal_name in removal_methods:
-    # load all results
-    results = {}
-    for patient_name in PATIENTS:
-        results[patient_name] = Result(patient_name, artifact_removal_name)
-
-    for classifier_name in results['aa'].classifiers:
-
-        def plot_mean(method, name, ax):
-            r = results['aa']
-
-            data = []
-            for n_csp in r.n_csp_components:
-                data.append([
-                    np.mean(results[patient_name].get_results(method, n_csp, classifier_name))
-                    for patient_name in results.keys()
-                    if method in results[patient_name].csp_methods
-                ])
-
-            # ax.plot(r.n_csp_components, [np.mean(d) for d in data], '-', label=name)
-            ax.errorbar(r.n_csp_components, [np.mean(d) for d in data], [np.std(d) for d in data],
-                        linestyle='-', marker='o', capsize=3, label=name)
-
-        fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 5))
-
-        ax = axes[0]
-        plot_mean('gep_no_checks', 'Python (eig)', ax)
-        plot_mean('pca_gep', 'PCA → (Python (eigh), Matlab)', ax)
-        plot_mean('pca_gep_no_checks', 'PCA → Python (eig)', ax)
-        plot_mean('matlab_gep_no_check', 'Matlab', ax)
-        plot_mean('pca_mne', 'PCA → MNE', ax)
-
-        ax.set_xlabel('Number of CSP components')
-        ax.set_ylabel('Accuracy')
-        ax.set_title('GEP, {}, {}'.format(artifact_removal_name, classifier_name))
-        ax.legend()
-
-        ax = axes[1]
-        plot_mean('gap_eig', 'Python (eig)', ax)
-        plot_mean('gap_dr', 'PCA → ((Python (eig, eigh), Matlab)', ax)
-        plot_mean('matlab_gap_no_check', 'Matlab', ax)
-        plot_mean('fieldtrip', 'Fieldtrip, BBCI', ax)
-
-        ax.set_xlabel('Number of CSP components')
-        ax.set_ylabel('Accuracy')
-        ax.set_title('GAP, {}, {}'.format(artifact_removal_name, classifier_name))
-        ax.legend()
-
-        plt.tight_layout()
-        # plt.show()
-        output_path = os.path.join(RESULTS_DIR, 'plots', 'aggregate')
-        make_dirs(output_path)
-        plt.savefig(os.path.join(output_path, '{}_accuracy_{}.png'.format(artifact_removal_name, classifier_name)))
-        plt.close()
-
-
 #%%
 # generate table
 
