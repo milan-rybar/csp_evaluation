@@ -160,7 +160,8 @@ csp_methods = {
 
     # our Matlab implementations
     'matlab_gep_no_check': partial(matlab_wrapper, csp_method='csp_gep_no_checks'),
-    'matlab_gap_no_check': partial(matlab_wrapper, csp_method='csp_geometric_approach_no_checks')
+    'matlab_gap_no_check': partial(matlab_wrapper, csp_method='csp_geometric_approach_no_checks'),
+    'matlab_gap_dr': partial(matlab_wrapper, csp_method='csp_geometric_approach_dim_reduction')
 }
 
 
