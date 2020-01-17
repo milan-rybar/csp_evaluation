@@ -241,7 +241,7 @@ def csp_wrapper(X, y, csp_method, n_csp_components, dataset):
     # select N CSP components
     unmixing_matrix = get_n_csp_components(W_T, n_csp_components // 2)
 
-    return unmixing_matrix, eigenvalues
+    return unmixing_matrix, eigenvalues, W_T
 
 
 def get_n_csp_components(W_T, n_select):

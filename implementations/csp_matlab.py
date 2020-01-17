@@ -47,7 +47,7 @@ def matlab_package_wrapper(X, y, csp_method, n_csp_components, dataset):
 
         eigenvalues = result['eigenvalues'] if 'eigenvalues' in result else None
 
-        return unmixing_matrix, eigenvalues
+        return unmixing_matrix, eigenvalues, None
 
 
 def save_as_mat(file_path, trials, labels, dataset):
@@ -113,6 +113,6 @@ def matlab_wrapper(X, y, csp_method, n_csp_components, dataset):
     logging.debug('CSP unmixing matrix %s', W_T.shape)
 
     # select N CSP components
-    W_T = get_n_csp_components(W_T, n_csp_components // 2)
+    selected_W_T = get_n_csp_components(W_T, n_csp_components // 2)
 
-    return W_T, eigenvalues
+    return selected_W_T, eigenvalues, W_T

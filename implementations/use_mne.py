@@ -20,4 +20,4 @@ def use_mne(X, y, n_csp_components, dataset):
     # eigenvalues are not stored
     eigenvalues = None
 
-    return W_T, eigenvalues
+    return W_T, eigenvalues, csp.filters_

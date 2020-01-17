@@ -66,12 +66,13 @@ def grid_evaluation(dataset, artifact_removal, csp_method, n_csp_components_list
 
 def _classification(X_train, X_test, y_train, y_test, csp_method, n_csp_components, classifiers, dataset):
     # compute CSP to get spatial filters
-    unmixing_matrix, eigenvalues = csp_method(
+    unmixing_matrix, eigenvalues, full_W_T = csp_method(
         X=X_train, y=y_train, n_csp_components=n_csp_components, dataset=dataset)
     assert unmixing_matrix.shape == (n_csp_components, X_train.shape[1])
 
     result = {
         'W_T': unmixing_matrix,
+        'full_W_T': full_W_T,
         'eigenvalues': eigenvalues,
         'classifier': {}
     }
