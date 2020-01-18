@@ -33,11 +33,14 @@ for n_csp in list(range(2, 22, 2)):  # full unmixing matrix is same for all #CSP
         for csp_method_name, result in results[patient_name].results.items():
             counter[patient_name][csp_method_name]['w'] = defaultdict(int)
             counter[patient_name][csp_method_name]['eigenvalues'] = defaultdict(int)
+            counter[patient_name][csp_method_name]['full_w'] = defaultdict(int)
 
             for r in result:
                 is_complex(r[n_csp]['W_T'], counter[patient_name][csp_method_name]['w'])
                 if 'eigenvalues' in r[n_csp] and r[n_csp]['eigenvalues'] is not None:
-                    is_complex(r[n_csp]['eigenvalues'], counter[patient_name][csp_method_name]['eigenvalues'] )
+                    is_complex(r[n_csp]['eigenvalues'], counter[patient_name][csp_method_name]['eigenvalues'])
+                if 'full_W_T' in r[n_csp] and r[n_csp]['full_W_T'] is not None:
+                    is_complex(r[n_csp]['full_W_T'], counter[patient_name][csp_method_name]['full_w'])
 
     output_path = os.path.join(RESULTS_DIR, 'complex')
     make_dirs(output_path)
@@ -73,3 +76,5 @@ for n_csp in list(range(2, 22, 2)):  # full unmixing matrix is same for all #CSP
         write_csv(csv.writer(f), 'w')
     with open(os.path.join(output_path, 'eigenvalues_counter_{}.csv'.format(n_csp)), 'w') as f:
         write_csv(csv.writer(f), 'eigenvalues')
+    with open(os.path.join(output_path, 'full_w_{}.csv'.format(n_csp)), 'w') as f:
+        write_csv(csv.writer(f), 'full_w')
