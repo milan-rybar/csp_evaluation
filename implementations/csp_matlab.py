@@ -18,36 +18,41 @@ def matlab_package_wrapper(X, y, csp_method, n_csp_components, dataset):
     # directory with .m files
     source_path = os.path.dirname(os.path.abspath(__file__))
 
-    with tempfile.TemporaryDirectory() as tmp_dir_path:
-        # save data to be used by Matlab CSP implementation
-        data_path = os.path.join(tmp_dir_path, 'data.mat')
-        save_as_mat(file_path=data_path, trials=X, labels=y, dataset=dataset)
+    while True:  # super dangerous! :)
+        try:
+            with tempfile.TemporaryDirectory() as tmp_dir_path:
+                # save data to be used by Matlab CSP implementation
+                data_path = os.path.join(tmp_dir_path, 'data.mat')
+                save_as_mat(file_path=data_path, trials=X, labels=y, dataset=dataset)
 
-        # file to store the result
-        output_path = os.path.join(tmp_dir_path, 'result.mat')
+                # file to store the result
+                output_path = os.path.join(tmp_dir_path, 'result.mat')
 
-        # run Matlab CSP implementation
-        command = [
-            '/usr/local/MATLAB/R2018b/bin/matlab',
-            '-nodisplay', '-nosplash', '-nodesktop',
-            '-r',
-            'cd("{}"); {}("{}", {}, "{}"); exit;'.format(
-                source_path, csp_method, data_path, n_csp_components, output_path)
-        ]
-        logging.info('Command: {}'.format(' '.join(command)))
-        subprocess.run(command)
+                # run Matlab CSP implementation
+                command = [
+                    '/usr/local/MATLAB/R2018b/bin/matlab',
+                    '-nodisplay', '-nosplash', '-nodesktop',
+                    '-r',
+                    'cd("{}"); {}("{}", {}, "{}"); exit;'.format(
+                        source_path, csp_method, data_path, n_csp_components, output_path)
+                ]
+                logging.info('Command: {}'.format(' '.join(command)))
+                subprocess.run(command)
 
-        # get the result
-        result = loadmat(output_path)
+                # get the result
+                result = loadmat(output_path)
 
-        unmixing_matrix = result['unmixing_matrix']
-        assert unmixing_matrix.dtype in [np.double, np.complex], unmixing_matrix.dtype
-        logging.debug('CSP unmixing matrix %s', unmixing_matrix.shape)
-        assert unmixing_matrix.shape[0] == n_csp_components, unmixing_matrix.shape
+                unmixing_matrix = result['unmixing_matrix']
+                assert unmixing_matrix.dtype in [np.double, np.complex], unmixing_matrix.dtype
+                logging.debug('CSP unmixing matrix %s', unmixing_matrix.shape)
+                assert unmixing_matrix.shape[0] == n_csp_components, unmixing_matrix.shape
 
-        eigenvalues = result['eigenvalues'] if 'eigenvalues' in result else None
+                eigenvalues = result['eigenvalues'] if 'eigenvalues' in result else None
 
-        return unmixing_matrix, eigenvalues, None
+                return unmixing_matrix, eigenvalues, None
+        except FileNotFoundError:
+            # running multiple instances in parallel sometimes have this error
+            pass
 
 
 def save_as_mat(file_path, trials, labels, dataset):
@@ -78,38 +83,43 @@ def matlab_wrapper(X, y, csp_method, n_csp_components, dataset):
     # directory with .m files
     source_path = os.path.dirname(os.path.abspath(__file__))
 
-    with tempfile.TemporaryDirectory() as tmp_dir_path:
-        data = {
-            'R_1': R_1,
-            'R_2': R_2
-        }
-        data_path = os.path.join(tmp_dir_path, 'data.mat')
-        savemat(file_name=data_path, mdict=data, do_compression=True)
+    W_T = None
+    while W_T is None:
+        try:
+            with tempfile.TemporaryDirectory() as tmp_dir_path:
+                data = {
+                    'R_1': R_1,
+                    'R_2': R_2
+                }
+                data_path = os.path.join(tmp_dir_path, 'data.mat')
+                savemat(file_name=data_path, mdict=data, do_compression=True)
 
-        # file to store the result
-        output_path = os.path.join(tmp_dir_path, 'result.mat')
+                # file to store the result
+                output_path = os.path.join(tmp_dir_path, 'result.mat')
 
-        # run Matlab CSP implementation
-        command = [
-            '/usr/local/MATLAB/R2018b/bin/matlab',
-            '-nodisplay', '-nosplash', '-nodesktop',
-            '-r',
-            'cd("{}"); {}("{}", "{}"); exit;'.format(
-                source_path, csp_method, data_path, output_path)
-        ]
-        logging.info('Command: {}'.format(' '.join(command)))
-        subprocess.run(command)
+                # run Matlab CSP implementation
+                command = [
+                    '/usr/local/MATLAB/R2018b/bin/matlab',
+                    '-nodisplay', '-nosplash', '-nodesktop',
+                    '-r',
+                    'cd("{}"); {}("{}", "{}"); exit;'.format(
+                        source_path, csp_method, data_path, output_path)
+                ]
+                logging.info('Command: {}'.format(' '.join(command)))
+                subprocess.run(command)
 
-        # get the result
-        result = loadmat(output_path)
+                # get the result
+                result = loadmat(output_path)
 
-        W_T = result['unmixing_matrix']
-        assert W_T.dtype in [np.double, np.complex], W_T.dtype
-        logging.debug('CSP unmixing matrix %s', W_T.shape)
-        assert W_T.shape[1] == X.shape[1]  # (sources, channels)
+                W_T = result['unmixing_matrix']
+                assert W_T.dtype in [np.double, np.complex], W_T.dtype
+                logging.debug('CSP unmixing matrix %s', W_T.shape)
+                assert W_T.shape[1] == X.shape[1]  # (sources, channels)
 
-        eigenvalues = result['eigenvalues']
-
+                eigenvalues = result['eigenvalues']
+        except FileNotFoundError:
+            # running multiple instances in parallel sometimes have this error
+            pass
     logging.debug('CSP unmixing matrix %s', W_T.shape)
 
     # select N CSP components
