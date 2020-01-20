@@ -8,8 +8,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import StratifiedKFold
 from sklearn.svm import SVC
 
-from artifacts_removal.ica_removal import (remove_artifacts_manual, remove_artifacts, ic_artifacts_by_kurtosis,
-                                           ic_artifacts_by_peak_values)
+from artifacts_removal.ica_removal import remove_artifacts_manual, remove_artifacts, ic_artifacts_by_peak_values
 from config import (ANALYSIS_FREQUENCY_START, ANALYSIS_FREQUENCY_END,
                     ANALYSIS_TIME_START, ANALYSIS_TIME_END, RESULTS_DIR)
 from dataset import load_dataset, PATIENTS
@@ -123,7 +122,6 @@ def transform_csp_components_for_classification(data):
 artifact_removal_methods = {
     'manual':  remove_artifacts_manual,
     'peak': partial(remove_artifacts, method=ic_artifacts_by_peak_values),
-    # 'kurtosis': partial(remove_artifacts, method=ic_artifacts_by_kurtosis)
     # 'iclabel': None
 }
 

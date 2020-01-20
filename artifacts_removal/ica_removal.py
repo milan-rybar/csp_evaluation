@@ -7,7 +7,6 @@ import os
 
 import mne
 import numpy as np
-from scipy.stats import kurtosis
 
 from config import RESULTS_DIR, ANALYSIS_TIME_END
 
@@ -76,27 +75,3 @@ def ic_artifacts_by_peak_values(ica, trials_epochs):
             ic_artifacts.append(channel_idx)
 
     return ic_artifacts
-
-
-def ic_artifacts_by_kurtosis(ica, trials_epochs):
-    n_trials, n_channels, _ = trials_epochs.get_data().shape
-
-    scalp_kurtosis = []
-    for channel_idx in range(n_channels):
-        # project one IC back to channels (NOTE: `trials_epochs` is modified inplace => copy)
-        scalp_ic = ica.apply(trials_epochs.copy(), include=[channel_idx])
-
-        # kurtosis of the scalp projection of each trial
-        k = kurtosis(scalp_ic.get_data().reshape(n_trials, -1), axis=-1)
-        assert k.shape == (n_trials, )
-        scalp_kurtosis.append(k)
-    scalp_kurtosis = np.stack(scalp_kurtosis)
-    assert scalp_kurtosis.shape == (n_channels, n_trials)
-
-    # k > (μ(k) + (0.5 × σ(k))) for each trial
-    # TODO: consider 2.0 instead of 0.5
-    is_artifacts = (scalp_kurtosis > (scalp_kurtosis.mean(axis=0) + (0.5 * scalp_kurtosis.std(axis=0)))).any(axis=1)
-    assert is_artifacts.shape == (n_channels, )
-    ic_artifacts = is_artifacts.nonzero()[0]
-
-    return list(ic_artifacts)
