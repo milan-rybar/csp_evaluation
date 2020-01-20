@@ -1,3 +1,7 @@
+"""
+Plot aggregated results over test folds and patients for selected methods.
+"""
+
 import os
 
 import numpy as np

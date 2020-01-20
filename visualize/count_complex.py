@@ -1,3 +1,8 @@
+"""
+Count a number of W^T and eigenvalues in complex numbers, real numbers,
+or complex with zero imaginary part and store results in CSV.
+"""
+
 import csv
 import os
 from collections import defaultdict

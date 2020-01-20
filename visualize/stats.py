@@ -1,20 +1,15 @@
-import os
-
 import numpy as np
-import pandas as pd
-import seaborn as sns
+import scikit_posthocs as sp
 from matplotlib import pyplot as plt
 from scipy.stats import friedmanchisquare
 
-from config import RESULTS_DIR
 from dataset import PATIENTS
-from utils import make_dirs
 from visualize.common import Result
-import scikit_posthocs as sp
 
 removal_methods = ['peak']
 
-# plot aggregate results
+#%%
+# test difference between groups
 for artifact_removal_name in removal_methods:
     # load all results
     results = {}
@@ -48,3 +43,35 @@ for artifact_removal_name in removal_methods:
         fig = sp.sign_plot(r, **heatmap_args)
         plt.show()
 
+
+#%%
+# test whether 2 methods are the same or not
+method_a = 'gap_dr'
+method_b = 'pca_gep'
+for patient_name in PATIENTS:
+    for artifact_removal_name in removal_methods:
+        try:
+            results = Result(patient_name, artifact_removal_name)
+            for n_csp in results.n_csp_components:
+                for classifier_name in results.classifiers:
+                    pvalue = results.compute_stats(method_a, method_b, n_csp, classifier_name, alternative='two-sided')
+                    if pvalue != 1.0:
+                        print(pvalue, patient_name, artifact_removal_name, n_csp, classifier_name)
+                        # assert pvalue == 1.0
+        except:
+            print(patient_name, artifact_removal_name)
+
+
+#%%
+# inspect max difference between protected Python eig and eigh
+max_difference = []
+for patient_name in PATIENTS:
+    for artifact_removal_name in removal_methods:
+        results = Result(patient_name, artifact_removal_name)
+        for split_idx in range(10):
+            for n_csp in results.n_csp_components:
+                a = np.real(results.results['pca_gep_no_checks'][split_idx][n_csp]['eigenvalues'])
+                b = np.real(results.results['pca_gep'][split_idx][n_csp]['eigenvalues'])
+                max_difference.append(np.abs(a - b).max())
+
+# np.array(max_difference).max()
