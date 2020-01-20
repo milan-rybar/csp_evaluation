@@ -1,3 +1,8 @@
+"""
+Compare methods whether they are statistically different
+and generate CSV with results.
+"""
+
 import csv
 import os
 
@@ -37,24 +42,24 @@ for artifact_removal_name in removal_methods:
         def get_diff_results(method, compare_method, alternative='greater'):
             row = ['{} VS {}'.format(method, compare_method)]
             for n_csp in results['aa'].n_csp_components:
-                if method != 'gap_eig':
-                    acc_method_a = np.array([r.get_results(method, n_csp, classifier_name) for r in results.values()]).reshape(-1)
-                    acc_method_b = np.array([r.get_results(compare_method, n_csp, classifier_name) for r in results.values()]).reshape(-1)
-                else:
-                    acc_method_a, acc_method_b = [], []
-                    for r in results.values():
-                        if method in r.csp_methods:
-                            acc_method_a.append(r.get_results(method, n_csp, classifier_name))
-                            acc_method_b.append(r.get_results(compare_method, n_csp, classifier_name))
-                    acc_method_a = np.array(acc_method_a).reshape(-1)
-                    acc_method_b = np.array(acc_method_b).reshape(-1)
+                # if method != 'gap_eig':
+                acc_method_a = np.array([r.get_results(method, n_csp, classifier_name) for r in results.values()]).reshape(-1)
+                acc_method_b = np.array([r.get_results(compare_method, n_csp, classifier_name) for r in results.values()]).reshape(-1)
+                # else:
+                #     acc_method_a, acc_method_b = [], []
+                #     for r in results.values():
+                #         if method in r.csp_methods:
+                #             acc_method_a.append(r.get_results(method, n_csp, classifier_name))
+                #             acc_method_b.append(r.get_results(compare_method, n_csp, classifier_name))
+                #     acc_method_a = np.array(acc_method_a).reshape(-1)
+                #     acc_method_b = np.array(acc_method_b).reshape(-1)
 
                 diff_methods = acc_method_b - acc_method_a
                 stats = wilcoxon(acc_method_b, acc_method_a, alternative=alternative, zero_method='pratt')
 
-                row.append('{0:.3f}'.format(diff_methods.mean()))
-                row.append('{0:.3f}'.format(diff_methods.std()))
-                row.append('{0:.3f}'.format(np.median(diff_methods)))
+                row.append('{0:.3f}'.format(diff_methods.mean() * 100))
+                row.append('{0:.3f}'.format(diff_methods.std() * 100))
+                row.append('{0:.3f}'.format(np.median(diff_methods) * 100))
                 row.append('{0:.5f}'.format(stats.pvalue))
                 row.append('{0:.5f}'.format(stats.statistic))
                 row.append(p_value_format(stats.pvalue))
@@ -86,8 +91,11 @@ for artifact_removal_name in removal_methods:
 
             # two-sided test between Python and Matlab
             # unprotected
-            writer.writerow(get_diff_results('matlab_gep_no_check', 'gep_no_checks'))
-            writer.writerow(get_diff_results('matlab_gap_no_check', 'gap_eig'))
+            writer.writerow(get_diff_results('matlab_gep_no_check', 'gep_no_checks', alternative='two-sided'))
+            writer.writerow(get_diff_results('matlab_gap_no_check', 'gap_eig', alternative='two-sided'))
 
             # protected
-            writer.writerow(get_diff_results('pca_matlab_gep_no_check', 'pca_gep_no_checks'))
+            writer.writerow(get_diff_results('pca_matlab_gep_no_check', 'pca_gep_no_checks', alternative='two-sided'))
+
+            # protected Python eigh vs eig
+            writer.writerow(get_diff_results('pca_gep', 'pca_gep_no_checks', alternative='two-sided'))
