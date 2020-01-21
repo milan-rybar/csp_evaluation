@@ -1,6 +1,4 @@
 import numpy as np
-import scikit_posthocs as sp
-from matplotlib import pyplot as plt
 from scipy.stats import friedmanchisquare
 
 from dataset import PATIENTS
@@ -24,24 +22,47 @@ for artifact_removal_name in removal_methods:
                 for patient_name in results.keys()
             ]).reshape(-1)
 
-        # protected
-        d = []
-        n_csp = 8
-        d.append(get_data('gep_no_checks', n_csp))
-        d.append(get_data('pca_gep', n_csp))
-        d.append(get_data('pca_gep_no_checks', n_csp))
-        d.append(get_data('matlab_gep_no_check', n_csp))
+        # GEP Python
+        for n_csp in results['aa'].n_csp_components:
+            d = [
+                get_data('gep_no_checks', n_csp),
+                get_data('pca_gep', n_csp),
+                get_data('pca_gep_no_checks', n_csp)
+            ]
+            pvalue = friedmanchisquare(*np.array(d))
+            print(n_csp)
+            print(pvalue)
 
-        pvalue = friedmanchisquare(*np.array(d))
-        print(pvalue)
+        # GAP
+        for n_csp in results['aa'].n_csp_components:
+            d = [
+                get_data('gap_eig', n_csp),
+                get_data('matlab_gap_no_check', n_csp),
+                get_data('gap_dr', n_csp)
+            ]
+            pvalue = friedmanchisquare(*np.array(d))
+            print(n_csp)
+            print(pvalue)
 
-        # https://github.com/maximtrp/scikit-posthocs/
-        r = sp.posthoc_nemenyi_friedman(np.array(d).T)
+        # GEP
+        for n_csp in results['aa'].n_csp_components:
+            d = [
+                get_data('gep_no_checks', n_csp),
+                get_data('matlab_gep_no_check', n_csp),
+                get_data('pca_gep', n_csp),
+                get_data('pca_gep_no_checks', n_csp)
+            ]
+            pvalue = friedmanchisquare(*np.array(d))
+            print(n_csp)
+            print(pvalue)
 
-        heatmap_args = {'linewidths': 0.25, 'linecolor': '0.5', 'clip_on': False, 'square': True,
-                        'cbar_ax_bbox': [0.80, 0.35, 0.04, 0.3]}
-        fig = sp.sign_plot(r, **heatmap_args)
-        plt.show()
+        # # https://github.com/maximtrp/scikit-posthocs/
+        # r = sp.posthoc_nemenyi_friedman(np.array(d).T)
+        #
+        # heatmap_args = {'linewidths': 0.25, 'linecolor': '0.5', 'clip_on': False, 'square': True,
+        #                 'cbar_ax_bbox': [0.80, 0.35, 0.04, 0.3]}
+        # fig = sp.sign_plot(r, **heatmap_args)
+        # plt.show()
 
 
 #%%
