@@ -7,7 +7,7 @@ import csv
 import os
 
 import numpy as np
-from scipy.stats import wilcoxon
+from scipy.stats import wilcoxon, sem
 
 from config import RESULTS_DIR
 from dataset import PATIENTS
@@ -59,6 +59,7 @@ for artifact_removal_name in removal_methods:
 
                 row.append('{0:.3f}'.format(diff_methods.mean() * 100))
                 row.append('{0:.3f}'.format(diff_methods.std() * 100))
+                row.append('{0:.3f}'.format(sem(diff_methods) * 100))
                 row.append('{0:.3f}'.format(np.median(diff_methods) * 100))
                 row.append('{0:.5f}'.format(stats.pvalue))
                 row.append('{0:.5f}'.format(stats.statistic))
@@ -73,6 +74,7 @@ for artifact_removal_name in removal_methods:
             for n_csp in results['aa'].n_csp_components:
                 row.append('{} mean'.format(n_csp))
                 row.append('{} std'.format(n_csp))
+                row.append('{} sem'.format(n_csp))
                 row.append('{} med'.format(n_csp))
                 row.append('{} pvalue'.format(n_csp))
                 row.append('{} statistic'.format(n_csp))
@@ -89,12 +91,12 @@ for artifact_removal_name in removal_methods:
             writer.writerow(get_diff_results('gap_eig', 'pca_gap_eig'))
             writer.writerow(get_diff_results('gap_eig', 'gap_dr'))  # should be same as above
 
-            # two-sided test between Python and Matlab
-            # unprotected
+            # two-sided tests
+            # unprotected Python and Matlab
             writer.writerow(get_diff_results('matlab_gep_no_check', 'gep_no_checks', alternative='two-sided'))
             writer.writerow(get_diff_results('matlab_gap_no_check', 'gap_eig', alternative='two-sided'))
 
-            # protected
+            # protected Python and Matlab
             writer.writerow(get_diff_results('pca_matlab_gep_no_check', 'pca_gep_no_checks', alternative='two-sided'))
 
             # protected Python eigh vs eig
