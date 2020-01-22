@@ -51,6 +51,7 @@ sns.pointplot(x='n_csp', y='acc', hue='method', data=df, ax=ax,
               dodge=0.3, ci=95, capsize=0.2, scale=0.5, legend=False,
               # supported values are '-', '--', '-.', ':', 'None', ' ', '', 'solid', 'dashed', 'dashdot', 'dotted'
               linestyles=['--', '--', '-', ':'], errwidth=1,
+              markers=['o', '^', 's', 'x'],
               palette=brewer2mpl.get_map('Set1', 'qualitative', 4).mpl_colors)
 ymin1, ymax1 = ax.get_ylim()
 
@@ -86,6 +87,7 @@ df = pd.DataFrame(data=data_for_pandas, columns=['method', 'n_csp', 'acc'])
 sns.pointplot(x='n_csp', y='acc', hue='method', data=df, ax=ax,
               dodge=0.3, ci=95, capsize=0.2, scale=0.5, legend=False,
               linestyles=['--', '--', '-', '-',  ':'], errwidth=1,
+              markers=['o', '^', 's', 'd', 'x'],
               palette=brewer2mpl.get_map('Dark2', 'qualitative', 5).mpl_colors)
 ymin2, ymax2 = ax.get_ylim()
 
