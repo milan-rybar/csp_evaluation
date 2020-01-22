@@ -56,7 +56,7 @@ sns.pointplot(x='n_csp', y='acc', hue='method', data=df, ax=ax,
 ymin1, ymax1 = ax.get_ylim()
 
 # add significance line
-def add_sig_line(x_start, x_end, y, ax, y_offset=1):
+def add_sig_line(x_start, x_end, y, ax, y_offset=2):
     lc = LineCollection([
         [(x_start, y), (x_end, y)],
         [(x_start, y - y_offset), (x_start, y)],
@@ -64,9 +64,10 @@ def add_sig_line(x_start, x_end, y, ax, y_offset=1):
     ], color=['k'], lw=1)
     ax.add_collection(lc)
 
-add_sig_line(x_start=-0.3, x_end=9.3, y=90, ax=ax)
+move_up = 0.7
+add_sig_line(x_start=-0.3, x_end=9.3, y=90 + move_up, ax=ax)
 # ax.text(0, 91, '{\small $p < 0.0001$}')
-ax.text(4.2, 90.2, '{\\small ****}')
+ax.text(4.2, 90.2 + move_up, '{\\small ****}')
 
 ax.set_xlabel('Number of CSP components')
 ax.set_ylabel('Accuracy')
@@ -93,15 +94,15 @@ ymin2, ymax2 = ax.get_ylim()
 
 
 # add significance line
-add_sig_line(x_start=-0.3, x_end=4.5, y=90, ax=ax)
+add_sig_line(x_start=-0.3, x_end=4.5, y=90 + move_up, ax=ax)
 # ax.text(0, 91, '{\small $p < 0.0001$}')
-ax.text(2, 90.2, '{\\small ****}')
-add_sig_line(x_start=4.5, x_end=5.5, y=90, ax=ax)
+ax.text(2, 90.2 + move_up, '{\\small ****}')
+add_sig_line(x_start=4.5, x_end=5.5, y=90 + move_up, ax=ax)
 # ax.text(4.5, 91, '{\small $p < 0.001$}')
-ax.text(4.8, 90.2, '{\\small ***}')
-add_sig_line(x_start=5.5, x_end=6.5, y=90, ax=ax)
+ax.text(4.8, 90.2 + move_up, '{\\small ***}')
+add_sig_line(x_start=5.5, x_end=6.5, y=90 + move_up, ax=ax)
 # ax.text(6, 91, '{\small $p < 0.01$}')
-ax.text(5.88, 90.2, '{\\small **}')
+ax.text(5.88, 90.2 + move_up, '{\\small **}')
 
 
 ax.set_xlabel('Number of CSP components')
