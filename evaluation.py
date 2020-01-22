@@ -163,7 +163,7 @@ csp_methods = {
 }
 
 
-@TaskGenerator
+# @TaskGenerator
 def run_task(patient_name, artifact_removal_name, csp_method_name, pca_reduction, prefix):
     output_path = os.path.join(RESULTS_DIR, 'evaluation', patient_name)
     make_dirs(output_path)
